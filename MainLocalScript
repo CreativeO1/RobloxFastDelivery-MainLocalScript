@@ -14,6 +14,8 @@ local Frame = Player.PlayerGui.ScreenGui.Frame
 local GUIShown = true
 local Debounce = true
 
+-- Hide / Unhide GUI
+
 Frame.Hide.MouseButton1Down:Connect(function()
 	if Debounce then
 		Debounce = false
@@ -32,6 +34,8 @@ Frame.Hide.MouseButton1Down:Connect(function()
 	end
 end)
 
+-- If character is destroyed, delete all scene objects that might exist in the workspace.
+
 script.AncestryChanged:Connect(function()
 	if script.Parent.Parent ~= workspace then
 		for _, object in pairs(workspace:GetChildren()) do
@@ -44,6 +48,8 @@ end)
 
 local SceneRunning = false
 
+-- Scene start
+
 Frame.Go.MouseButton1Down:Connect(function()
 	if not SceneRunning then
 		SceneRunning = true
@@ -52,7 +58,9 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 		local GetBoxed = Animator:LoadAnimation(script.Boxing)
 		local GetBoxedIndefinitely = Animator:LoadAnimation(script.Boxing2)
-
+		
+		-- Anchor root part and set all parts to non collide
+		
 		HumanoidRoot.Anchored = true
 		Humanoid.PlatformStand = true
 		for _, part in pairs(HumanoidRoot:GetChildren()) do
@@ -61,7 +69,7 @@ Frame.Go.MouseButton1Down:Connect(function()
 			end
 		end
 
-		GetBoxed.Stopped:Connect(function()
+		GetBoxed.Stopped:Connect(function() -- Player's lying down animation has completed.
 			GetBoxedIndefinitely:Play(0)
 
 			local Box = game.ReplicatedStorage.Box:Clone()
@@ -76,7 +84,7 @@ Frame.Go.MouseButton1Down:Connect(function()
 			local RightPartTween = TweenService:Create(Box.RightPartSocket, TweenInfo.new(1), {CFrame = Box.RightPartSocket.CFrame * CFrame.Angles(0, 0, math.rad(90))})
 			local LeftPartTween = TweenService:Create(Box.LeftPartSocket, TweenInfo.new(1), {CFrame = Box.LeftPartSocket.CFrame * CFrame.Angles(0, 0, math.rad(-90))})
 
-			RightPartTween.Completed:Connect(function()
+			RightPartTween.Completed:Connect(function() -- Right part of the box has finished moving.
 				wait(0.5)
 
 				Box.RightPart.WeldConstraint.Enabled = false
@@ -84,20 +92,24 @@ Frame.Go.MouseButton1Down:Connect(function()
 				local TopPartTween = TweenService:Create(Box.TopPartSocket, TweenInfo.new(1), {CFrame = Box.TopPartSocket.CFrame * CFrame.Angles(0, 0, math.rad(90))})
 				TopPartTween:Play()
 
-				TopPartTween.Completed:Connect(function()
+				TopPartTween.Completed:Connect(function() -- Box animations are complete
 					wait(0.5)
-
+					
+					-- Clone tape from the ReplicatedStorage
+					
 					local TapeClone = game.ReplicatedStorage.Tape:Clone()
 					TapeClone.Parent = workspace
 					TapeClone.CFrame = CFrame.new((Box.BottomPart.Position + Vector3.new(0, 8.151, 0)))
 
 					local TapeTween = TweenService:Create(TapeClone, TweenInfo.new(1), {CFrame = CFrame.new(TapeClone.CFrame.Position - Vector3.new(0, 5, 0))})
 
-					TapeTween.Completed:Connect(function()
+					TapeTween.Completed:Connect(function() -- Tape has finished moving
 						TapeClone.WeldConstraint.Part1 = Box.TopPart
 
 						wait(0.5)
-
+						
+						-- Weld all box parts to bottom part of the box
+						
 						Box.RightPart.WeldConstraint.Enabled = true
 						TapeClone.Anchored = false
 						Box.TopPartSocket.Anchored = false
@@ -117,27 +129,39 @@ Frame.Go.MouseButton1Down:Connect(function()
 						LeftSocketWeld.Parent = Box.BottomPart
 						LeftSocketWeld.Part0 = Box.BottomPart
 						LeftSocketWeld.Part1 = Box.LeftPartSocket
-
+						
+						-- Unanchor all box parts except bottom part
+						
 						Box.FrontPartSocket.Anchored = false
 						Box.BackPartSocket.Anchored = false
 						Box.RightPartSocket.Anchored = false
 						Box.LeftPartSocket.Anchored = false
+						
+						-- Weld the player's root part to bottom part of the box
 
 						local RootWeld = Instance.new("WeldConstraint")
 						RootWeld.Parent = Box.BottomPart
 						RootWeld.Part0 = Box.BottomPart
 						RootWeld.Part1 = HumanoidRoot
+						
+						-- Unanchor root part
 
 						HumanoidRoot.Anchored = false
+						
+						-- Clone Truck model into workspace
 
 						local Truck = game.ReplicatedStorage.DeliveryTruck:Clone()
 						Truck.Parent = workspace
 						Truck:SetPrimaryPartCFrame(CFrame.new((Box.BottomPart.Position + Vector3.new(10, 1.25, 200))))
-
+						
+						-- Clone Mailman model into workspace
+						
 						local Mailman = game.ReplicatedStorage.Mailman:Clone()
 						Mailman.Parent = workspace
 						Mailman:SetPrimaryPartCFrame(Truck.RootWeldPart.CFrame)
-
+						
+						-- Weld the Mailman on Truck Seat
+						
 						local SeatWeld = Instance.new("WeldConstraint")
 						SeatWeld.Parent = Mailman.HumanoidRootPart
 						SeatWeld.Part0 = Mailman.HumanoidRootPart
@@ -147,27 +171,27 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 						local MailmanHumanoid = Mailman.Humanoid
 						local PickupTrackButCooler = MailmanHumanoid.Animator:LoadAnimation(script.PickupButINS)
-						PickupTrackButCooler:Play(0)
+						PickupTrackButCooler:Play(0) -- Make the Mailman look like he's holding the wheel
 
 						local ChassisTween1 = TweenService:Create(Truck.Chassis, TweenInfo.new(5), {CFrame = CFrame.new((Box.BottomPart.Position + Vector3.new(10, 1.25, -20)))})
 
-						ChassisTween1.Completed:Connect(function()
+						ChassisTween1.Completed:Connect(function() -- Truck has moved next to the box
 							wait(1)
 
-							PickupTrackButCooler:Stop()
+							PickupTrackButCooler:Stop() -- Mailman stops holding the wheel
 
 							Truck.Door.DoorHinge.Anchored = true
 							Truck.Door.DoorHinge.WeldConstraint.Enabled = false
 							local TruckDoorTween = TweenService:Create(Truck.Door.DoorHinge, TweenInfo.new(1.5), {CFrame = Truck.Door.DoorHinge.CFrame * CFrame.Angles(0, math.rad(-70), 0)})
 
 							TruckDoorTween.Completed:Connect(function()
-								SeatWeld:Destroy()
+								SeatWeld:Destroy() -- Unweld Mailman from Truck Seat
 
 								local WalkingTrack = MailmanHumanoid.Animator:LoadAnimation(script.Walking)
 								WalkingTrack.Looped = true
 								local WalkingTrackPlaying = false
 
-								MailmanHumanoid.Running:Connect(function(NewSpeed)
+								MailmanHumanoid.Running:Connect(function(NewSpeed) -- Mailman walking animation handler
 									if NewSpeed > 0.5 and not WalkingTrackPlaying then
 										WalkingTrackPlaying = true
 										WalkingTrack:Play()
@@ -178,12 +202,12 @@ Frame.Go.MouseButton1Down:Connect(function()
 								end)
 
 								wait(1)
-
+								-- Mailman walks out of the truck
 								local WalkToPoint1 = Mailman.HumanoidRootPart.Position - Vector3.new(8, 1, 0)
 								MailmanHumanoid.WalkToPoint = WalkToPoint1
 
 								wait(4)
-
+								-- Mailman walks next to the box
 								local WalkToPoint2 = Box.BottomPart.Position + Vector3.new(0, 3, -3)
 								Mailman.HumanoidRootPart.CFrame = CFrame.new(WalkToPoint1, WalkToPoint2)
 								MailmanHumanoid.WalkToPoint = WalkToPoint2
@@ -197,13 +221,14 @@ Frame.Go.MouseButton1Down:Connect(function()
 								local BottomPartWeld = nil
 								local PickupTrack = MailmanHumanoid.Animator:LoadAnimation(script.Pickup)
 
-								PickupTrack.Stopped:Connect(function()
+								PickupTrack.Stopped:Connect(function() -- Pickup animation complete
 									PickupTrackButCooler:Play(0)
 
 									Mailman.HumanoidRootPart.Anchored = false
 
 									wait(1)
-
+									
+									-- Mailman moves next to the Cargo Door of Truck
 									MailmanHumanoid.WalkToPoint = Truck.CargoSocket.Position + Vector3.new(0, -4, 4)
 
 									wait(2)
@@ -211,8 +236,8 @@ Frame.Go.MouseButton1Down:Connect(function()
 									Truck.CargoSocket.Anchored = true
 									Truck.CargoSocket.WeldConstraint.Enabled = false
 									local CargoDoorTween = TweenService:Create(Truck.CargoSocket, TweenInfo.new(1), {CFrame = Truck.CargoSocket.CFrame * CFrame.Angles(math.rad(90), 0, 0)})
-
-									CargoDoorTween.Completed:Connect(function()
+									
+									CargoDoorTween.Completed:Connect(function() -- Cargo Door opened
 										wait(0.2)
 
 										MailmanHumanoid.WalkToPoint = Truck.CargoSocket.Position + Vector3.new(0, -4, 1)
@@ -236,27 +261,31 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 										local CargoDoorCloseTween = TweenService:Create(Truck.CargoSocket, TweenInfo.new(1), {CFrame = Truck.CargoSocket.CFrame * CFrame.Angles(math.rad(-90), 0, 0)})
 
-										CargoDoorCloseTween.Completed:Connect(function()
+										CargoDoorCloseTween.Completed:Connect(function() -- Cargo Door closes
 											wait(0.2)
 
 											Truck.CargoSocket.Anchored = false
 											Truck.CargoSocket.WeldConstraint.Enabled = true
 
-											Camera.CameraSubject = Truck.MetalUnion
+											Camera.CameraSubject = Truck.MetalUnion -- Camera subject changes to the Truck
 
 											wait(1)
-
+											-- Mailmam moves 10 studs to left
 											MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position - Vector3.new(10, 0, 0)
 
 											wait(1.5)
-
+											
+											-- Mailman moves 20 studs forward
 											MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position - Vector3.new(0, 0, 20)
 
 											wait(3)
-
+											
+											-- Mailman moves 7 stud to right, going inside the truck
 											MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position + Vector3.new(7, 0, 0)
 
 											wait(2.5)
+											
+											-- Mailman welded to Truck seat
 
 											Mailman.HumanoidRootPart.Anchored = true
 											Mailman.HumanoidRootPart.CFrame = Truck.RootWeldPart.CFrame
@@ -267,11 +296,11 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 											Mailman.HumanoidRootPart.Anchored = false
 
-											PickupTrackButCooler:Play()
+											PickupTrackButCooler:Play(0) -- Mailman holds the wheel again
 
 											local TruckDoorCloseTween = TweenService:Create(Truck.Door.DoorHinge, TweenInfo.new(1.5), {CFrame = Truck.Door.DoorHinge.CFrame * CFrame.Angles(0, math.rad(70), 0)})
 
-											TruckDoorCloseTween.Completed:Connect(function()
+											TruckDoorCloseTween.Completed:Connect(function() -- Truck Door closes
 												wait(1)
 
 												Truck.Door.DoorHinge.WeldConstraint.Enabled = true
@@ -279,33 +308,34 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 												local ChassisRotationTween = TweenService:Create(Truck.Chassis, TweenInfo.new(1), {CFrame = CFrame.new(Truck.Chassis.Position, Vector3.new(XCoordinate, 1.25, ZCoordinate))})
 
-												ChassisRotationTween.Completed:Connect(function()
+												ChassisRotationTween.Completed:Connect(function() -- Truck is looking at its destination
+													-- I calculate the distance and divide it by 44 to get how many seconds it should take for Truck to get to its destination and add 1 to it takes atleast 1 second to complete any tween, Truck is moving at approximately 44 studs per second.
 													local DriveTime = (math.sqrt(((Truck.Chassis.Position.X - XCoordinate)^2) + ((Truck.Chassis.Position.Z - ZCoordinate)^2)) / 44) + 1
 
 													local ChassisDriveTween = TweenService:Create(Truck.Chassis, TweenInfo.new(DriveTime), {CFrame = CFrame.new(Vector3.new(XCoordinate, 1.25, ZCoordinate)) * Truck.Chassis.CFrame.Rotation})
 
-													ChassisDriveTween.Completed:Connect(function()
+													ChassisDriveTween.Completed:Connect(function() -- Truck has arrived at its destination
 														local ChassisRotationTween2 = TweenService:Create(Truck.Chassis, TweenInfo.new(1), {CFrame = CFrame.new(Truck.Chassis.Position)})
 														
-														ChassisRotationTween2.Completed:Connect(function()
+														ChassisRotationTween2.Completed:Connect(function() -- Reset Truck orientation (Just so my life is much eaiser)
 															wait(0.5)
 															Truck.Door.DoorHinge.Anchored = true
 															Truck.Door.DoorHinge.WeldConstraint.Enabled = false
 															local TruckDoorTween = TweenService:Create(Truck.Door.DoorHinge, TweenInfo.new(1.5), {CFrame = Truck.Door.DoorHinge.CFrame * CFrame.Angles(0, math.rad(-70), 0)})
 
-															PickupTrackButCooler:Stop()
+															PickupTrackButCooler:Stop(0) -- Mailman stops holding the wheel
 
 															TruckDoorTween.Completed:Connect(function()
 																newSeatWeld:Destroy()
-
+																-- Mailman gets out of the truck
 																MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position - Vector3.new(7, 0, 0)
 
 																wait(1.5)
-
+																-- Mailman moves to the back of the truck
 																MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position + Vector3.new(0, 0, 20)
 
 																wait(3)
-
+																-- Mailman moves next to the cargo door
 																MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position + Vector3.new(10, 0, 0)
 
 																wait(2.5)
@@ -314,17 +344,18 @@ Frame.Go.MouseButton1Down:Connect(function()
 																Truck.CargoSocket.WeldConstraint.Enabled = false
 																local CargoDoorTween = TweenService:Create(Truck.CargoSocket, TweenInfo.new(1), {CFrame = Truck.CargoSocket.CFrame * CFrame.Angles(math.rad(90), 0, 0)})
 																
-																Camera.CameraSubject = Char
-																CargoDoorTween.Completed:Connect(function()
+																Camera.CameraSubject = Char -- Camera subject changes back to the player's character
+																CargoDoorTween.Completed:Connect(function() -- Cargo door of Truck opened
 																	wait(0.5)
-																	PickupTrackButCooler:Play()
+																	PickupTrackButCooler:Play() -- Pickup anim
 
 																	Box.BottomPart.Anchored = true
-																	newBottomWeld:Destroy()
+																	newBottomWeld:Destroy() -- Unweld Box from Truck
 
 																	local ArmCFrame = Mailman["Right Arm"].CFrame
 																	Box.BottomPart.CFrame = (ArmCFrame * (CFrame.new(Vector3.new(-1.5, -3, -0.2)) * CFrame.Angles(math.rad(-90), math.rad(90), 0)))
-
+																	
+																	-- Weld box to Mailman's Right Arm
 																	local newestBottomPartWeld = Instance.new("WeldConstraint")
 																	newestBottomPartWeld.Parent = Box.BottomPart
 																	newestBottomPartWeld.Part0 = Box.BottomPart
@@ -332,19 +363,23 @@ Frame.Go.MouseButton1Down:Connect(function()
 																	Box.BottomPart.Anchored = false
 																	
 																	wait(0.5)
-																	
+																	-- Mailman moves away from the truck
 																	MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position + Vector3.new(0, 0, 10)
 																
 																	wait(2)
 																	
+																	-- The box can collide with the world again
 																	for _, part in pairs(Box:GetChildren()) do
 																		part.CanCollide = true
 																	end
 																	
+																	-- Mailman drops box
 																	newestBottomPartWeld:Destroy()
 																	PickupTrackButCooler:Stop()
 																	
 																	wait(1)
+																	
+																	-- Mailman walks back to the truck
 																	
 																	MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position - Vector3.new(10, 0, 10)
 																	
@@ -357,6 +392,8 @@ Frame.Go.MouseButton1Down:Connect(function()
 																	MailmanHumanoid.WalkToPoint = Mailman.HumanoidRootPart.Position + Vector3.new(7, 0, 0)
 																	
 																	wait(2)
+																	
+																	-- Truck explodes epically
 																	
 																	local EXPLOSIONYEAH = Instance.new("Explosion")
 																	EXPLOSIONYEAH.Position = Mailman.HumanoidRootPart.Position
@@ -371,13 +408,19 @@ Frame.Go.MouseButton1Down:Connect(function()
 																	
 																	wait(3)
 																	
+																	-- Player gets up and lying down animation is stopped
+																	
 																	Humanoid.PlatformStand = false
 																	GetBoxedIndefinitely:Stop()
+																	
+																	-- All scene objects are deleted
 																	
 																	Mailman:Destroy()
 																	Truck:Destroy()
 																	Box:Destroy()
 																	TapeClone:Destroy()
+																	
+																	-- Scene / Thread is complete
 																	
 																	SceneRunning = false
 																end)
@@ -410,9 +453,13 @@ Frame.Go.MouseButton1Down:Connect(function()
 
 								wait(0.8)
 								PickupTrack:AdjustSpeed(0)
+								
+								-- Move the box right above Mailman's right arm
 								local ArmCFrame = Mailman["Right Arm"].CFrame
 								Box.BottomPart.CFrame = (ArmCFrame * (CFrame.new(Vector3.new(-1.5, -3, -0.2)) * CFrame.Angles(math.rad(-90), math.rad(90), 0)))
-
+								
+								-- Weld the box to Mailman's right arm
+								
 								BottomPartWeld = Instance.new("WeldConstraint")
 								BottomPartWeld.Parent = Box.BottomPart
 								BottomPartWeld.Part0 = Box.BottomPart
